@@ -3,13 +3,13 @@ package ThreadSafePriorityQueue;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.Comparator;
 
-public class TokenarrayElement<E> {
+
+
+public class TokenarrayElement<E extends Comparable>  {
 
 	private E value;// The value of element
     
 	private int position;// The index of element in binary heap
-	
-	private Comparator<? super E> comparator;// Used to compare priorities
 	
 	private final ReentrantLock tokenarrayLock;//The lock that control the concurrent access in the Tokenarray
 	
@@ -22,7 +22,7 @@ public class TokenarrayElement<E> {
 	 * 
 	 */
 
-	 public TokenarrayElement(E value, int position,Comparator<? super E> comparator,ReentrantLock tokenarrayLock) {
+	 public TokenarrayElement(E value, int position,ReentrantLock tokenarrayLock) {
              this.value = value;
              this.position = position;
              this.tokenarrayLock = tokenarrayLock;
@@ -82,16 +82,13 @@ public class TokenarrayElement<E> {
 	  * if the first one is greater, return true
 	  * 
 	  */
-	 public boolean isGreater(E e) {
-	        int result;
-	        if (comparator != null) {
-	            result = comparator.compare(e, value);
-	        } else {
-	            result = ((Comparable<? super E>) e).compareTo(this.value);
-	        }
-
-	        return (result > 0);
-
-	
+	 
+	 public boolean isGreaterThan(E e) {
+	       int result= this.value.compareTo(e);
+	        return (result > 0);	
 	}
+
+
+
+
 }
