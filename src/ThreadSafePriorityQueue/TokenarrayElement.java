@@ -1,11 +1,10 @@
 package ThreadSafePriorityQueue;
 
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.Comparator;
 
 
 
-public class TokenarrayElement<E extends Comparable>  {
+public class TokenarrayElement<E extends Comparable<E>>  {
 
 	private E value;// The value of element
     
@@ -51,7 +50,7 @@ public class TokenarrayElement<E extends Comparable>  {
 		 return position;
 	 }
 	 
-	 public void setPostion(int ostision)
+	 public void setPostion(int position)
 	 {
 		 this.position =position;
 	 }
@@ -84,8 +83,8 @@ public class TokenarrayElement<E extends Comparable>  {
 	  */
 	 
 	 public boolean isGreaterThan(E e) {
-	       int result= this.value.compareTo(e);
-	        return (result > 0);	
+	       int res= this.value.compareTo(e);
+	        return (res > 0);	
 	}
 
 
