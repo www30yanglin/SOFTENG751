@@ -1,5 +1,6 @@
 package ThreadSafePriorityQueue;
 
+import java.util.Comparator;
 import java.util.concurrent.locks.ReentrantLock;
 
 
@@ -10,7 +11,9 @@ public class TokenarrayElement<E extends Comparable<E>>  {
     
 	private int position;// The index of element in binary heap
 	
-	private final ReentrantLock tokenarrayLock;//The lock that control the concurrent access in the Tokenarray
+	private ReentrantLock tokenarrayLock;//The lock that control the concurrent access in the Tokenarray
+	
+	private Comparator<? super E> comparator;// For different comparing strategies
 	
 	/*
 	 * constructor
@@ -21,7 +24,7 @@ public class TokenarrayElement<E extends Comparable<E>>  {
 	 * 
 	 */
 
-	 public TokenarrayElement(E value, int position,ReentrantLock tokenarrayLock) {
+	 public TokenarrayElement(E value, int position,ReentrantLock tokenarrayLock,Comparator<? super E> comparator) {
              this.value = value;
              this.position = position;
              this.tokenarrayLock = tokenarrayLock;
@@ -47,7 +50,7 @@ public class TokenarrayElement<E extends Comparable<E>>  {
 	  */
 	 public int getPostion()
 	 {
-		 return position;
+		 return this.position;
 	 }
 	 
 	 public void setPostion(int position)
@@ -61,12 +64,12 @@ public class TokenarrayElement<E extends Comparable<E>>  {
 	  */
 	 public void lock()
 	 {
-		 tokenarrayLock.lock();
+		 this.tokenarrayLock.lock();
 	 }
 	 
 	 public void unlock()
 	 {
-		 tokenarrayLock.lock();
+		 this.tokenarrayLock.lock();
 	 }
 	 
 	 public ReentrantLock getLock()
@@ -83,10 +86,13 @@ public class TokenarrayElement<E extends Comparable<E>>  {
 	  */
 	 
 	 public boolean isGreaterThan(E e) {
-	       int res= this.value.compareTo(e);
+		 int res;
+		if(this.comparator == null)
+	       res= this.value.compareTo(e);
+		else
+		   res= comparator.compare(e, value);
 	        return (res > 0);	
 	}
-
 
 
 
