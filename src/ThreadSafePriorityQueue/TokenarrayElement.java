@@ -75,12 +75,19 @@ public class TokenarrayElement<E> {
 		 return this.tokenarrayLock;
 	 }
 	 
-	 public boolean isGreater(E o) {
+	 
+	 /*
+	  * 
+	  * Compare the values of two different elements
+	  * if the first one is greater, return true
+	  * 
+	  */
+	 public boolean isGreater(E e) {
 	        int result;
 	        if (comparator != null) {
-	            result = comparator.compare(o, value);
+	            result = comparator.compare(e, value);
 	        } else {
-	            result = ((Comparable<? super E>) o).compareTo(this.value);
+	            result = ((Comparable<? super E>) e).compareTo(this.value);
 	        }
 
 	        return (result > 0);
