@@ -11,7 +11,7 @@ public class TokenarrayElement<E extends Comparable<E>>  {
     
 	private int position;// The index of element in binary heap
 	
-	private ReentrantLock tokenarrayLock;//The lock that control the concurrent access in the Tokenarray
+	private final ReentrantLock tokenarrayLock;//The lock that control the concurrent access in the Tokenarray
 	
 	private Comparator<? super E> comparator;// For different comparing strategies
 	
