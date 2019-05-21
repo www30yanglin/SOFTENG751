@@ -66,13 +66,13 @@ public class PipelinedPriorityQueue<E extends Comparable<E>> extends AbstractQue
 		    
 		    int capacity=1;
 		    
-		    BinaryheapNode leftChild=getLeftChild(i);
+		    BinaryheapNode<E> leftChild=getLeftChild(i);
 		    if(leftChild!= null)
 		    {
 		    	capacity+=leftChild.getCapacity();
 		    }
 		    
-		    BinaryheapNode rightChild=getRightChild(i);
+		    BinaryheapNode<E> rightChild=getRightChild(i);
 		    if(rightChild!= null)
 		    {
 		    	capacity+=rightChild.getCapacity();
@@ -85,7 +85,7 @@ public class PipelinedPriorityQueue<E extends Comparable<E>> extends AbstractQue
 
 		
 
-		private BinaryheapNode getRightChild(int i) {
+		private BinaryheapNode<E> getRightChild(int i) {
 			int index=2*i+2;
 			if (index>binaryheap.length)
 				return null;
@@ -93,7 +93,7 @@ public class PipelinedPriorityQueue<E extends Comparable<E>> extends AbstractQue
 					return binaryheap[index];
 		}
 
-		private BinaryheapNode getLeftChild(int i) {
+		private BinaryheapNode<E> getLeftChild(int i) {
 			int index=2*i+1;
 			if (index>binaryheap.length)
 				return null;
