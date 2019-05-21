@@ -48,7 +48,7 @@ public class TokenarrayElement<E extends Comparable<E>>  {
 	 /*
 	  * The methods about position
 	  */
-	 public int getPostion()
+	 public int getPosition()
 	 {
 		 return this.position;
 	 }

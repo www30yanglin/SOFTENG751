@@ -61,6 +61,16 @@ public class BinaryheapNode<E extends Comparable<E>> {
 		 return this.capacity;
 	 }
 	 
+	 public void decCap()
+	 {
+		 this.capacity--;
+	 }
+	 
+	 public void incCep()
+	 {
+		 this.capacity++;
+	 }
+	 
 	 /*
 	  * 
 	  * Compare the values of two different nodes

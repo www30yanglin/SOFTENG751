@@ -113,12 +113,70 @@ public class PipelinedPriorityQueue<E extends Comparable<E>> extends AbstractQue
 	        
 	        while(levels<tokenarray.length)
 	        {
-	        	boolean result = localEnqueue(levels);
+	        	boolean flag = localEnqueue(levels);
+	        	
+	        	if(flag)
+	        	{
+	        		incSize();
+	        		if(levels+1<tokenarray.length)
+	        			tokenarray[levels+1].unlock();
+	        		tokenarray[levels].unlock();
+	        		break;
+	        	}
+	        	tokenarray[levels].unlock();
+	        	levels++;
+	        	 if (levels + 1 < tokenarray.length) 
+	        		 tokenarray[levels + 1].lock();
 	        }
 		return true;
 	}
 
 	private boolean localEnqueue(int levels) {
+		int pos =tokenarray[levels].getPosition();
+		int pos2;
+		E Value=tokenarray[levels].getValue();
+		BinaryheapNode node=binaryheap[pos];
+		
+		if(!(node.getActive()))
+		{
+			node.setValue(Value);
+			node.decCap();
+			node.setActive(true);
+			return true;
+		}
+		else
+			if(tokenarray[levels].isGreaterThan(binaryheap[pos].getValue()))
+			{
+				E temp = binaryheap[pos].getValue();
+				node.setValue(Value);
+				tokenarray[levels].setValue(temp);
+			}
+		
+		node.decCap();
+		tokenarray[levels+1].setValue(tokenarray[levels].getValue());
+		tokenarray[levels].setValue(null);
+		
+		BinaryheapNode<E> leftChild=getLeftChild(pos);
+		BinaryheapNode<E> rightChild=getRightChild(pos);
+		
+		if(leftChild==null&&rightChild==null)
+		return true;
+		
+		if(leftChild==null)
+			pos2=pos*2+2;
+		else if(rightChild==null)
+			pos2=pos*2+1;
+		else if(!leftChild.getActive())
+			pos2=pos*2+1;
+		else if(!rightChild.getActive())
+			pos2=pos*2+2;
+		else if(leftChild.getCapacity()>=rightChild.getCapacity())
+			pos2=pos*2+1;
+			else
+				pos2=pos*2+2;
+		
+		tokenarray[levels+1].setPosition(pos2);
+		
 		
 		return false;
 	}
@@ -314,5 +372,15 @@ public class PipelinedPriorityQueue<E extends Comparable<E>> extends AbstractQue
 			private AtomicInteger sizeToLevels(int dEFAULT_NODES2) {
 			int res=(int) Math.ceil(Math.log(dEFAULT_NODES2+ 1) / Math.log(2));
 			return new AtomicInteger(res);
+			
+			 
+			        }
+			
+			private void incSize() {
+			     if (size.incrementAndGet() > 1) {
+			            notEmptyLock.lock();
+			            notEmptyCondition.signal();
+			            notEmptyLock.unlock();
+			    }
 		}
 }
