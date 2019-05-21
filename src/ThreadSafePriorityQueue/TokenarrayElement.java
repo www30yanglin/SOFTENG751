@@ -53,7 +53,7 @@ public class TokenarrayElement<E extends Comparable<E>>  {
 		 return this.position;
 	 }
 	 
-	 public void setPostion(int position)
+	 public void setPosition(int position)
 	 {
 		 this.position =position;
 	 }
