@@ -130,126 +130,10 @@ public class PipelinedPriorityQueue<E extends Comparable<E>> extends AbstractQue
 	        }
 		return true;
 	}
+	 
+	 
 
-	private boolean localEnqueue(int levels) {
-		int pos =tokenarray[levels].getPosition();
-		int pos2;
-		E Value=tokenarray[levels].getValue();
-		BinaryheapNode node=binaryheap[pos];
-		
-		if(!(node.getActive()))
-		{
-			node.setValue(Value);
-			node.decCap();
-			node.setActive(true);
-			return true;
-		}
-		else
-			if(tokenarray[levels].isGreaterThan(binaryheap[pos].getValue()))
-			{
-				E temp = binaryheap[pos].getValue();
-				node.setValue(Value);
-				tokenarray[levels].setValue(temp);
-			}
-		
-		node.decCap();
-		tokenarray[levels+1].setValue(tokenarray[levels].getValue());
-		tokenarray[levels].setValue(null);
-		
-		BinaryheapNode<E> leftChild=getLeftChild(pos);
-		BinaryheapNode<E> rightChild=getRightChild(pos);
-		
-		if(leftChild==null&&rightChild==null)
-		return true;
-		
-		if(leftChild==null)
-			pos2=pos*2+2;
-		else if(rightChild==null)
-			pos2=pos*2+1;
-		else if(!leftChild.getActive())
-			pos2=pos*2+1;
-		else if(!rightChild.getActive())
-			pos2=pos*2+2;
-		else if(leftChild.getCapacity()>=rightChild.getCapacity())
-			pos2=pos*2+1;
-			else
-				pos2=pos*2+2;
-		
-		tokenarray[levels+1].setPosition(pos2);
-		
-		
-		return false;
-	}
-
-
-	private void tryGrow(int oldCap) {
-         int length=tokenarray.length;
-           
-         for(int i=2;i<length;i++)
-         {
-        	 tokenarray[i].lock();
-         }
-         
-         int newCap=oldCap+((oldCap<64)?(oldCap+2):(oldCap>>1));// grow faster if small
-         if (newCap - MAX_ARRAY_SIZE > 0) {
-         int Cap= oldCap+1;
-         if(Cap<0||Cap>MAX_ARRAY_SIZE)
-        	 throw new OutOfMemoryError();
-         newCap=MAX_ARRAY_SIZE;
-         }
-         BinaryheapNode<E>[] oldBinaryArray = binaryheap;
-         binaryheap = new BinaryheapNode[newCap];
-         
-         
-         initBinaryheapNodes(0);
-         
-         for (int i = 0; i < oldCap; i++) {
-             binaryheap[i] = oldBinaryArray[i];
-         }
-         
-         updateCaps(0);
-         
-         this.height=sizeToLevels(newCap);
-         
-         @SuppressWarnings("unchecked")
-		TokenarrayElement<E>[] token = new TokenarrayElement [height.get()];
-         for (int i = 0; i < tokenarray.length; i++) {
-             token[i] = tokenarray[i];
-         }
-         
-         for (int i = tokenarray.length; i < height.get(); i++) {
-             token[i] = new TokenarrayElement<E>(null, 1,new ReentrantLock(true),comparator);
-         }
-         
-         for (int i = 2; i < length; i++) {
-             tokenarray[i].unlock();
-         }
-	}
-
-
-	private void updateCaps(int i) {
-		if (i < 0 || i >= binaryheap.length) return;
-        updateCaps(2*1+1);
-        updateCaps(2*i+2);
-        
-        int cap = binaryheap[i].getActive() ? 0 : 1;
-
-        BinaryheapNode<E> leftChild = getLeftChild(i);
-        if (leftChild != null) 
-        {
-            cap += leftChild.getCapacity();
-        }
-
-        BinaryheapNode<E> rightChild = getRightChild(i);
-        
-        if (rightChild != null) 
-        {
-            cap += rightChild.getCapacity();
-        }
-
-        binaryheap[i].setCapacity(cap);
-		
-	}
+	
 
 
 	@Override
@@ -284,14 +168,24 @@ public class PipelinedPriorityQueue<E extends Comparable<E>> extends AbstractQue
 
 	@Override
 	public boolean offer(E e, long timeout, TimeUnit unit) throws InterruptedException {
-		// TODO Auto-generated method stub
-		return false;
+		return offer(e);// never need to block
 	}
 
 	@Override
 	public E take() throws InterruptedException {
-		// TODO Auto-generated method stub
-		return null;
+		notEmptyLock.lock();
+		E res;
+		try {
+        while ((res = poll())==null) {
+            notEmptyCondition.await();
+        }
+		}
+        finally
+		
+        {
+        	notEmptyLock.unlock();
+        }
+     return res;
 	}
 
 	@Override
@@ -302,22 +196,60 @@ public class PipelinedPriorityQueue<E extends Comparable<E>> extends AbstractQue
 
 	@Override
 	public int remainingCapacity() {
-		// TODO Auto-generated method stub
-		return 0;
+		return MAX_ARRAY_SIZE;
+		
 	}
 
+	
+	/*
+	 * Moves elements from priorityqueue to the collection. 
+	 */
 	@Override
 	public int drainTo(Collection<? super E> c) {
-		// TODO Auto-generated method stub
-		return 0;
+		return drainTo(c, c.size());
 	}
 
 	@Override
 	public int drainTo(Collection<? super E> c, int maxElements) {
-		// TODO Auto-generated method stub
-		return 0;
+		if (c == null)
+            throw new NullPointerException();
+        if (c == this)
+            throw new IllegalArgumentException();
+        if (maxElements <= 0)
+            return 0;
+        
+        int res=Math.min(size.get(), maxElements);
+        lockTokenarray();
+        E value;
+        
+        for(int i=0;i<res;i++)
+        {
+        	value=poll();
+        	c.add(value);
+        }
+        unlockTokenarray();
+        return res;
 	}
-	 private void initTokenarrayElements(int i) {
+	 private void unlockTokenarray() {
+		for (int i=0;i<tokenarray.length;i++)
+		{
+			if(tokenarray[i]!=null)
+			tokenarray[i].unlock();
+		}
+		
+	}
+
+
+	private void lockTokenarray() {
+		for (int i=0;i<tokenarray.length;i++)
+		{
+			if(tokenarray[i]!=null)
+			tokenarray[i].unlock();
+		}
+	}
+
+
+	private void initTokenarrayElements(int i) {
 			for( i=0; i< tokenarray.length;i++)
 			{
 				TokenarrayElement<E> element=new TokenarrayElement<E>(null,1,new ReentrantLock(true),comparator);
@@ -383,4 +315,123 @@ public class PipelinedPriorityQueue<E extends Comparable<E>> extends AbstractQue
 			            notEmptyLock.unlock();
 			    }
 		}
+			private boolean localEnqueue(int levels) {
+				int pos =tokenarray[levels].getPosition();
+				int pos2;
+				E Value=tokenarray[levels].getValue();
+				BinaryheapNode node=binaryheap[pos];
+				
+				if(!(node.getActive()))
+				{
+					node.setValue(Value);
+					node.decCap();
+					node.setActive(true);
+					return true;
+				}
+				else
+					if(tokenarray[levels].isGreaterThan(binaryheap[pos].getValue()))
+					{
+						E temp = binaryheap[pos].getValue();
+						node.setValue(Value);
+						tokenarray[levels].setValue(temp);
+					}
+				
+				node.decCap();
+				tokenarray[levels+1].setValue(tokenarray[levels].getValue());
+				tokenarray[levels].setValue(null);
+				
+				BinaryheapNode<E> leftChild=getLeftChild(pos);
+				BinaryheapNode<E> rightChild=getRightChild(pos);
+				
+				if(leftChild==null&&rightChild==null)
+				return true;
+				
+				if(leftChild==null)
+					pos2=pos*2+2;
+				else if(rightChild==null)
+					pos2=pos*2+1;
+				else if(!leftChild.getActive())
+					pos2=pos*2+1;
+				else if(!rightChild.getActive())
+					pos2=pos*2+2;
+				else if(leftChild.getCapacity()>=rightChild.getCapacity())
+					pos2=pos*2+1;
+					else
+						pos2=pos*2+2;
+				
+				tokenarray[levels+1].setPosition(pos2);
+				
+				
+				return false;
+			}
+
+
+			private void tryGrow(int oldCap) {
+		         int length=tokenarray.length;
+		           
+		         for(int i=2;i<length;i++)
+		         {
+		        	 tokenarray[i].lock();
+		         }
+		         
+		         int newCap=oldCap+((oldCap<64)?(oldCap+2):(oldCap>>1));// grow faster if small
+		         if (newCap - MAX_ARRAY_SIZE > 0) {
+		         int Cap= oldCap+1;
+		         if(Cap<0||Cap>MAX_ARRAY_SIZE)
+		        	 throw new OutOfMemoryError();
+		         newCap=MAX_ARRAY_SIZE;
+		         }
+		         BinaryheapNode<E>[] oldBinaryArray = binaryheap;
+		         binaryheap = new BinaryheapNode[newCap];
+		         
+		         
+		         initBinaryheapNodes(0);
+		         
+		         for (int i = 0; i < oldCap; i++) {
+		             binaryheap[i] = oldBinaryArray[i];
+		         }
+		         
+		         updateCaps(0);
+		         
+		         this.height=sizeToLevels(newCap);
+		         
+		         @SuppressWarnings("unchecked")
+				TokenarrayElement<E>[] token = new TokenarrayElement [height.get()];
+		         for (int i = 0; i < tokenarray.length; i++) {
+		             token[i] = tokenarray[i];
+		         }
+		         
+		         for (int i = tokenarray.length; i < height.get(); i++) {
+		             token[i] = new TokenarrayElement<E>(null, 1,new ReentrantLock(true),comparator);
+		         }
+		         
+		         for (int i = 2; i < length; i++) {
+		             tokenarray[i].unlock();
+		         }
+			}
+
+
+			private void updateCaps(int i) {
+				if (i < 0 || i >= binaryheap.length) return;
+		        updateCaps(2*1+1);
+		        updateCaps(2*i+2);
+		        
+		        int cap = binaryheap[i].getActive() ? 0 : 1;
+
+		        BinaryheapNode<E> leftChild = getLeftChild(i);
+		        if (leftChild != null) 
+		        {
+		            cap += leftChild.getCapacity();
+		        }
+
+		        BinaryheapNode<E> rightChild = getRightChild(i);
+		        
+		        if (rightChild != null) 
+		        {
+		            cap += rightChild.getCapacity();
+		        }
+
+		        binaryheap[i].setCapacity(cap);
+				
+			}
 }
