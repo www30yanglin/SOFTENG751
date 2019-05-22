@@ -141,7 +141,7 @@ public class PipelinedPriorityQueue<E extends Comparable<E>> extends AbstractQue
 		 tokenarray[0].lock();
 		 if (tokenarray.length > 1) 
 			tokenarray[1].lock();
-		 E value = binaryheap[0].getValue();
+		    E value = binaryheap[0].getValue();
 	        binaryheap[0].setActive(false);
 	        binaryheap[0].setValue(null);
 	        binaryheap[0].incCap();
@@ -165,7 +165,7 @@ public class PipelinedPriorityQueue<E extends Comparable<E>> extends AbstractQue
                 	tokenarray[levels + 1].unlock();
 	     }
 	       
-	    		   
+	    	return value;	   
 	}
 
 	private void decSize() {
