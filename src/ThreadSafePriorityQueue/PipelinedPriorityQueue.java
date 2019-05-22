@@ -138,9 +138,76 @@ public class PipelinedPriorityQueue<E extends Comparable<E>> extends AbstractQue
 
 	@Override
 	public E poll() {
-		// TODO Auto-generated method stub
-		return null;
+		 tokenarray[0].lock();
+		 if (tokenarray.length > 1) 
+			tokenarray[1].lock();
+		 E value = binaryheap[0].getValue();
+	        binaryheap[0].setActive(false);
+	        binaryheap[0].setValue(null);
+	        binaryheap[0].incCap();
+	        tokenarray[0].setPosition(0);
+		 
+	     for(int levels=0;levels<tokenarray.length;levels++)
+	     {
+	    	 boolean res=localDequeue(levels);
+	    	 if(res)
+	    	 {
+	    		 decSize();
+	    		 tokenarray[levels].unlock();
+	             if (levels + 1 < tokenarray.length) 
+	                	tokenarray[levels + 1].unlock();
+	             break;
+	    	 }
+	    	 
+	    	 tokenarray[levels].unlock();
+	    	 levels++;
+             if (levels + 1 < tokenarray.length) 
+                	tokenarray[levels + 1].unlock();
+	     }
+	       
+	    		   
 	}
+
+	private void decSize() {
+		size.decrementAndGet();
+		
+	}
+
+
+	private boolean localDequeue(int levels) {
+		int pos=tokenarray[levels].getPosition();
+		BinaryheapNode<E> leftChild = getLeftChild(pos);
+        BinaryheapNode<E> rightChild = getRightChild(pos);
+        
+
+        if ((leftChild == null || !leftChild.getActive())
+                && (rightChild == null || !rightChild.getActive())) {
+            return true;
+        }
+        
+        BinaryheapNode<E> greatestChild;
+        int gpos;
+        
+        if (leftChild == null || leftChild.getValue() == null) {
+            greatestChild = rightChild;
+            gpos = pos*2+2;
+        } else if (rightChild == null || rightChild.getValue() == null || leftChild.isGreaterThan(rightChild.getValue())) {
+            greatestChild = leftChild;
+            gpos = pos*2+1;
+        } else {        
+            greatestChild = rightChild;
+            gpos = pos*2+2;
+        }
+        
+        binaryheap[pos].setActive(true);
+        binaryheap[pos].setValue(greatestChild.getValue());
+        greatestChild.setActive(false);
+        greatestChild.incCap();
+        greatestChild.setValue(null);
+        tokenarray[levels + 1].setPosition(gpos);
+		return false;
+	}
+
 
 	@Override
 	public E peek() {

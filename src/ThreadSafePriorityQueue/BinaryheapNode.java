@@ -66,7 +66,7 @@ public class BinaryheapNode<E extends Comparable<E>> {
 		 this.capacity--;
 	 }
 	 
-	 public void incCep()
+	 public void incCap()
 	 {
 		 this.capacity++;
 	 }
