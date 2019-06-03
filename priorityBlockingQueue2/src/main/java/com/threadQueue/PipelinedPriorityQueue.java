@@ -1,8 +1,11 @@
-package ThreadSafePriorityQueue;
+package com.threadQueue;
 
+import java.util.AbstractQueue;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -53,7 +56,7 @@ public class PipelinedPriorityQueue<E extends Comparable<E>> extends AbstractQue
        * PriorityBlockingQueue with the specified initial capacity
        */
 		public PipelinedPriorityQueue(int initialCapacity) {
-	        if(initialCapacity<=0) throw new  IllegalArgumentException("ERROR:The capacity is smaller than 0!!!");
+	        if(initialCapacity<=0) throw new IllegalArgumentException("ERROR:The capacity is smaller than 0!!!");
 	        int levels= sizeToLevels(initialCapacity).get();
 	        this.binaryheap=new BinaryheapNode[initialCapacity];
 	        initBinaryheapNodes(0);
@@ -62,12 +65,11 @@ public class PipelinedPriorityQueue<E extends Comparable<E>> extends AbstractQue
 	        initTokenarrayElements(0);
 	        this.height = sizeToLevels(initialCapacity);
 	        this.comparator=null;
-	        
 	    }
 
 	   
 	    public PipelinedPriorityQueue(int initialCapacity,Comparator<? super E> comparator) {
-	    	 if(initialCapacity<=0) throw new  IllegalArgumentException("ERROR:The capacity is smaller than 0!!!");
+	    	 if(initialCapacity<=0) throw new IllegalArgumentException("ERROR:The capacity is smaller than 0!!!");
 		        int levels= sizeToLevels(initialCapacity).get();
 		        this.binaryheap=new BinaryheapNode[initialCapacity];
 		        initBinaryheapNodes(0);
@@ -353,11 +355,18 @@ public class PipelinedPriorityQueue<E extends Comparable<E>> extends AbstractQue
 			
 
 			private BinaryheapNode<E> getRightChild(int i) {
-				int index=2*i+2;
-				if (index>binaryheap.length)
-					return null;
+				try{
+					int index=2*i+2;
+					if (index>binaryheap.length)
+						return null;
 					else
-						return binaryheap[index];
+						if(binaryheap.length>=index){
+							return binaryheap[index];
+						}
+				}catch (Exception e){
+					e.printStackTrace();
+				}
+				return null;
 			}
 
 			private BinaryheapNode<E> getLeftChild(int i) {
@@ -404,9 +413,10 @@ public class PipelinedPriorityQueue<E extends Comparable<E>> extends AbstractQue
 					}
 				
 				node.decCap();
+				if(levels<(tokenarray.length-1))
+				{
 				tokenarray[levels+1].setValue(tokenarray[levels].getValue());
 				tokenarray[levels].setValue(null);
-				
 				BinaryheapNode<E> leftChild=getLeftChild(pos);
 				BinaryheapNode<E> rightChild=getRightChild(pos);
 				

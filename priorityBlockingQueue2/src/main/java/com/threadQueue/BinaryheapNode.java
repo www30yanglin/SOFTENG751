@@ -1,4 +1,4 @@
-package ThreadSafePriorityQueue;
+package com.threadQueue;
 
 import java.util.Comparator;
 

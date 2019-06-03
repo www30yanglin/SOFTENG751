@@ -1,8 +1,7 @@
-package ThreadSafePriorityQueue;
+package com.threadQueue;
 
 import java.util.Comparator;
 import java.util.concurrent.locks.ReentrantLock;
-
 
 
 public class TokenarrayElement<E extends Comparable<E>>  {
@@ -24,7 +23,7 @@ public class TokenarrayElement<E extends Comparable<E>>  {
 	 * 
 	 */
 
-	 public TokenarrayElement(E value, int position,ReentrantLock tokenarrayLock,Comparator<? super E> comparator) {
+	 public TokenarrayElement(E value, int position, ReentrantLock tokenarrayLock, Comparator<? super E> comparator) {
              this.value = value;
              this.position = position;
              this.tokenarrayLock = tokenarrayLock;
